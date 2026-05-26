@@ -31,6 +31,15 @@ from PIL import Image, ImageEnhance, ImageFilter, ImageOps, UnidentifiedImageErr
 _here = pathlib.Path(__file__).parent
 _local_potrace = _here / ("potrace.exe" if os.name == "nt" else "potrace")
 POTRACE_PATH = str(_local_potrace) if _local_potrace.exists() else "potrace"
+
+# ── host/port: read from .ip file if present, otherwise default to localhost ──
+_ip_file = _here / ".ip"
+if _ip_file.exists():
+    _addr = _ip_file.read_text().strip()
+    _host, _port = (_addr.rsplit(":", 1) + ["8080"])[:2] if ":" in _addr else (_addr, "8080")
+    _port = int(_port)
+else:
+    _host, _port = "127.0.0.1", 8080
 # ─────────────────────────────────────────────────────────────────────────────
 
 app = Flask(__name__)
@@ -1812,8 +1821,8 @@ if __name__ == "__main__":
     if len(sys.argv) > 1 and not sys.argv[1].startswith("-"):
         run_cli()
     else:
-        url = "http://localhost:5000"
+        url = f"http://{_host}:{_port}"
         print(f"Starting Vectorize Live  \u2192  {url}")
         print("Press Ctrl+C to stop.\n")
         threading.Timer(1.2, lambda: webbrowser.open(url)).start()
-        app.run(host="192.168.0.13", port=8080, debug=False, threaded=True)
+        app.run(host=_host, port=_port, debug=False, threaded=True)

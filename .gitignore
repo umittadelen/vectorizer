@@ -28,6 +28,9 @@ Thumbbs.db
 potrace.exe
 potrace
 mkbitmap.exe
+
+# Local network config — keep your IP off the internet
+.ip
 mkbitmap
 
 # Misc
