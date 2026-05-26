@@ -1816,4 +1816,4 @@ if __name__ == "__main__":
         print(f"Starting Vectorize Live  \u2192  {url}")
         print("Press Ctrl+C to stop.\n")
         threading.Timer(1.2, lambda: webbrowser.open(url)).start()
-        app.run(host="127.0.0.1", port=5000, debug=False, threaded=True)
+        app.run(host="192.168.0.13", port=8080, debug=False, threaded=True)
