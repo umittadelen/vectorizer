@@ -36,3 +36,4 @@ mkbitmap
 # Misc
 *.log
 *.tmp
+/static/mascot.png
