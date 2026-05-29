@@ -184,20 +184,44 @@ HTML = r"""<!DOCTYPE html>
 <html lang="en">
 <head>
 <meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Vectorize Live</title>
 <style>
+/* ── mobile block ─────────────────────────────────────────────────────────── */
+.mobile-block {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 99999;
+  background: oklch(0.08 0.006 278);
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  font-family: system-ui, sans-serif;
+  color: oklch(0.92 0.008 278);
+}
+.mobile-block-inner { max-width: 320px; }
+.mobile-block-icon  { font-size: 3rem; margin-bottom: 16px; }
+.mobile-block h1    { font-size: 1.2rem; color: oklch(0.80 0.24 155); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 10px; }
+.mobile-block p     { color: oklch(0.65 0.010 278); font-size: .85rem; line-height: 1.6; }
+@media (max-width: 767px), (pointer: coarse) and (max-width: 1023px) {
+  .mobile-block { display: flex; }
+  body > *:not(.mobile-block) { display: none !important; }
+}
+
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
-  --bg:      #0d0d0f;
-  --panel:   #141416;
-  --side:    #0f0f11;
-  --border:  #252528;
-  --text:    #ccc;
-  --dim:     #666;
-  --green:   #3ddc84;
-  --red:     #ff4f4f;
-  --blue:    #4f9eff;
+  --bg:      oklch(0.08 0.006 278);
+  --panel:   oklch(0.10 0.006 278);
+  --side:    oklch(0.09 0.006 278);
+  --border:  oklch(0.18 0.008 278);
+  --text:    oklch(0.92 0.008 278);
+  --dim:     oklch(0.65 0.010 278);
+  --green:   oklch(0.80 0.24 155);
+  --red:     oklch(0.65 0.26 25);
+  --blue:    oklch(0.70 0.20 252);
 }
 
 body {
@@ -219,14 +243,23 @@ body {
   display: flex;
   flex-direction: column;
   overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: oklch(0.30 0.008 278) transparent;
 }
+.sidebar::-webkit-scrollbar { width: 5px; }
+.sidebar::-webkit-scrollbar-track { background: transparent; }
+.sidebar::-webkit-scrollbar-thumb {
+  background: oklch(0.30 0.008 278);
+  border-radius: 3px;
+}
+.sidebar::-webkit-scrollbar-thumb:hover { background: oklch(0.42 0.010 278); }
 
 .sidebar-title {
   padding: 14px 16px 10px;
   font-size: .72rem;
   letter-spacing: .20em;
   text-transform: uppercase;
-  color: #6a6a7e;
+  color: oklch(0.62 0.015 278);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
 }
@@ -248,7 +281,7 @@ body {
 .upload-zone:hover, .upload-zone.drag-over {
   border-color: var(--green);
   color: var(--green);
-  background: rgba(61,220,132,.04);
+  background: oklch(0.80 0.24 155 / 0.04);
 }
 .upload-zone input { display: none; }
 .upload-icon { font-size: 1.5rem; display: block; margin-bottom: 2px; }
@@ -276,7 +309,7 @@ body {
   font-size: .64rem;
   letter-spacing: .16em;
   text-transform: uppercase;
-  color: #4a4a5c;
+  color: oklch(0.57 0.015 278);
   margin-bottom: -4px;
 }
 
@@ -290,16 +323,16 @@ body {
   justify-content: space-between;
   align-items: center;
 }
-.ctrl-label { color: #8a8a9e; font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; }
+.ctrl-label { color: oklch(0.88 0.012 278); font-size: .72rem; text-transform: uppercase; letter-spacing: .07em; }
 .ctrl-val   { color: var(--green); font-size: .76rem; min-width: 40px; text-align: right; font-weight: bold; }
 
 /* ── info tooltip ─────────────────────────────────────────────────────────── */
 #tooltip {
   position: fixed;
   z-index: 999;
-  background: #1c1c21;
-  border: 1px solid #2e2e36;
-  color: #9a9ab0;
+  background: oklch(0.14 0.007 278);
+  border: 1px solid oklch(0.22 0.010 278);
+  color: oklch(0.76 0.015 278);
   font-size: .74rem;
   line-height: 1.55;
   padding: 8px 11px;
@@ -308,13 +341,13 @@ body {
   pointer-events: none;
   opacity: 0;
   transition: opacity .12s;
-  box-shadow: 0 6px 20px rgba(0,0,0,.6);
+  box-shadow: 0 6px 20px oklch(0 0 0 / 0.6);
 }
 #tooltip.visible { opacity: 1; }
 .ctrl-label-group { display: flex; align-items: center; gap: 4px; }
 .info-btn {
   font-size: .65rem;
-  color: #3a3a4c;
+  color: oklch(0.48 0.015 278);
   cursor: default;
   user-select: none;
   line-height: 1;
@@ -327,7 +360,7 @@ input[type=range] {
   -webkit-appearance: none;
   width: 100%;
   height: 3px;
-  background: var(--border);
+  background: oklch(0.32 0.010 278);
   border-radius: 2px;
   outline: none;
   cursor: pointer;
@@ -377,7 +410,7 @@ input[type=range]::-moz-range-thumb {
   top: 2px; left: 2px;
   width: 14px; height: 14px;
   border-radius: 50%;
-  background: #fff;
+  background: oklch(1 0 0);
   pointer-events: none;
   transition: left .15s;
 }
@@ -550,10 +583,10 @@ input[type=range]::-moz-range-thumb {
 .btool.active, .bsize.active {
   border-color: var(--green);
   color: var(--green);
-  background: rgba(61,220,132,.10);
+  background: oklch(0.80 0.24 155 / 0.10);
 }
 .btool-sep { width: 1px; height: 14px; background: var(--border); margin: 0 2px; flex-shrink: 0; }
-.btool-label { font-size: .59rem; color: #4a4a5c; letter-spacing: .08em; text-transform: uppercase; }
+.btool-label { font-size: .59rem; color: oklch(0.57 0.015 278); letter-spacing: .08em; text-transform: uppercase; }
 .btool-action {
   padding: 3px 9px;
   border: 1px solid var(--border);
@@ -568,7 +601,7 @@ input[type=range]::-moz-range-thumb {
 }
 .btool-action:hover { border-color: var(--green); color: var(--green); }
 .btool-action.primary { border-color: var(--green); color: var(--green); }
-.btool-action.primary:hover { background: rgba(61,220,132,.10); }
+.btool-action.primary:hover { background: oklch(0.80 0.24 155 / 0.10); }
 .btool-action:disabled { opacity: .25; cursor: default; pointer-events: none; }
 .viewport {
   flex: 1;
@@ -598,7 +631,7 @@ input[type=range]::-moz-range-thumb {
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #303035;
+  color: oklch(0.38 0.008 278);
   font-size: .68rem;
   letter-spacing: .12em;
   pointer-events: none;
@@ -613,7 +646,7 @@ input[type=range]::-moz-range-thumb {
 .xhair::before, .xhair::after {
   content: '';
   position: absolute;
-  background: rgba(255,255,255,.35);
+  background: oklch(1 0 0 / 0.35);
 }
 .xhair::before { width: 1px; height: 200vh; top: -100vh; left: 0; transform: translateX(-50%); }
 .xhair::after  { height: 1px; width: 200vw;  left: -100vw; top: 0; transform: translateY(-50%); }
@@ -632,6 +665,15 @@ footer {
 </style>
 </head>
 <body>
+
+<div class="mobile-block">
+  <div class="mobile-block-inner">
+    <div class="mobile-block-icon">&#128444;</div>
+    <h1>Desktop Only</h1>
+    <p>This tool requires a desktop browser. Please open it on a PC.</p>
+    <p style="margin-top:10px;font-size:.75rem;color:oklch(0.48 0.015 278);">(actually the developer was too lazy to implement it)</p>
+  </div>
+</div>
 
 <!-- ── sidebar ──────────────────────────────────────────────────────────── -->
 <div class="sidebar">
@@ -1479,7 +1521,7 @@ function drawCursorPreview(cx, cy) {
   }
   const sw = x1 - x0 + 1, sh = y1 - y0 + 1;
   cursorSave = { imageData: ctxBitmap.getImageData(x0, y0, sw, sh), x: x0, y: y0 };
-  ctxBitmap.fillStyle = bitmapDrawMode === 'ink' ? 'rgba(61,220,132,0.75)' : 'rgba(255,85,85,0.75)';
+  ctxBitmap.fillStyle = bitmapDrawMode === 'ink' ? 'oklch(0.80 0.24 155 / 0.75)' : 'oklch(0.65 0.26 25 / 0.75)';
   for (const [px, py] of pixels) ctxBitmap.fillRect(px, py, 1, 1);
 }
 function bresenhamLine(x0, y0, x1, y1) {
@@ -1511,7 +1553,7 @@ function drawLinePreview(x0, y0, x1, y1) {
     if (px > Mx) Mx = px; if (py > My) My = py;
   }
   cursorSave = { imageData: ctxBitmap.getImageData(mx, my, Mx-mx+1, My-my+1), x: mx, y: my };
-  ctxBitmap.fillStyle = bitmapDrawMode === 'ink' ? 'rgba(61,220,132,0.75)' : 'rgba(255,85,85,0.75)';
+  ctxBitmap.fillStyle = bitmapDrawMode === 'ink' ? 'oklch(0.80 0.24 155 / 0.75)' : 'oklch(0.65 0.26 25 / 0.75)';
   for (const [px, py] of pixels) ctxBitmap.fillRect(px, py, 1, 1);
 }
 function paintLine(x0, y0, x1, y1) {
@@ -1519,14 +1561,14 @@ function paintLine(x0, y0, x1, y1) {
   ctxBitmap.fillStyle = bitmapDrawMode === 'ink' ? '#ffffff' : '#000000';
   for (const [px, py] of _collectLinePx(x0, y0, x1, y1)) ctxBitmap.fillRect(px, py, 1, 1);
   bitmapEdited = true;
-  lastPaintPos = { cx: x1, cy: y1 };
+  lastPaintPos = { cx: Math.round(x1), cy: Math.round(y1) };
 }
 function paintOnCanvas(cx, cy) {
   clearCursorPreview();
   ctxBitmap.fillStyle = bitmapDrawMode === 'ink' ? '#ffffff' : '#000000';
   for (const [px, py] of getBrushPixels(cx, cy)) ctxBitmap.fillRect(px, py, 1, 1);
   bitmapEdited = true;
-  lastPaintPos = { cx, cy };
+  lastPaintPos = { cx: Math.floor(cx), cy: Math.floor(cy) };
 }
 function setPreviewTab(mode) {
   previewMode = mode;
