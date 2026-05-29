@@ -773,6 +773,7 @@ footer {
 
   <div class="actions">
     <button class="btn btn-primary" id="btn-download" disabled>&#8595; Download SVG</button>
+    <button class="btn" id="btn-download-cropped" disabled>&#8595; Cropped SVG</button>
     <button class="btn" id="btn-export-project" title="Export project (params + images + undo history) as JSON">&#8599; Export</button>
     <label class="btn" title="Import a saved .json project file">&#8601; Import<input type="file" id="btn-import-project" accept=".json" style="display:none"></label>
     <button class="btn" id="btn-reset">Reset Defaults</button>
@@ -891,7 +892,8 @@ const coordsEl   = document.getElementById('coords');
 const zoomSlider = document.getElementById('zoom-slider');
 const zoomVal    = document.getElementById('zoom-val');
 const statusBar  = document.getElementById('status-bar');
-const btnDownload= document.getElementById('btn-download');
+const btnDownload        = document.getElementById('btn-download');
+const btnDownloadCropped = document.getElementById('btn-download-cropped');
 const btnReset   = document.getElementById('btn-reset');
 const fileInput  = document.getElementById('file-input');
 const uploadZone = document.getElementById('upload-zone');
@@ -1088,6 +1090,7 @@ async function process() {
     showImg(1, data.svg);
     currentSvg = data.svg;
     btnDownload.disabled = false;
+    btnDownloadCropped.disabled = false;
     const now = new Date();
     setStatus(`ready \u00B7 ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`, 'ok');
   } catch (e) {
@@ -1112,6 +1115,107 @@ btnDownload.addEventListener('click', () => {
   const base = currentFile ? currentFile.name.replace(/\.[^.]+$/, '') : 'output';
   a.download = base + '.svg';
   a.click();
+});
+
+// ── download SVG (cropped — margins removed) ─────────────────────────────────
+btnDownloadCropped.addEventListener('click', async () => {
+  if (!currentSvg) return;
+  btnDownloadCropped.disabled = true;
+  setStatus('cropping\u2026', 'loading');
+  try {
+    // Decode SVG to access its XML
+    const b64     = currentSvg.split(',')[1];
+    const svgText = atob(b64);
+    const parser  = new DOMParser();
+    const doc     = parser.parseFromString(svgText, 'image/svg+xml');
+    const svgEl   = doc.documentElement;
+    const W = Math.round(parseFloat(svgEl.getAttribute('width')  || 100));
+    const H = Math.round(parseFloat(svgEl.getAttribute('height') || 100));
+
+    // Render SVG into an offscreen canvas (scale down for large images)
+    const MAX_DIM = 2000;
+    const scale   = Math.min(1, MAX_DIM / Math.max(W, H, 1));
+    const cw      = Math.max(1, Math.round(W * scale));
+    const ch      = Math.max(1, Math.round(H * scale));
+
+    const img = new Image();
+    await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = currentSvg; });
+
+    const cv  = document.createElement('canvas');
+    cv.width  = cw; cv.height = ch;
+    const ctx = cv.getContext('2d');
+    ctx.drawImage(img, 0, 0, cw, ch);
+    const { data } = ctx.getImageData(0, 0, cw, ch);
+
+    // Detect background type: transparent, black, or white — sample corners
+    function pxAt(x, y) {
+      const i = (y * cw + x) * 4;
+      return [data[i], data[i+1], data[i+2], data[i+3]]; // r,g,b,a
+    }
+    const corners = [pxAt(0,0), pxAt(cw-1,0), pxAt(0,ch-1), pxAt(cw-1,ch-1)];
+    let transpCorners = 0, darkCorners = 0;
+    for (const [r, g, b, a] of corners) {
+      if (a < 30) transpCorners++;
+      else if (r < 128 && g < 128 && b < 128) darkCorners++;
+    }
+    const isTranspBg = transpCorners >= 2;
+    const isBlackBg  = !isTranspBg && darkCorners >= 2;
+
+    // Find the bounding box of all non-background pixels
+    let x0 = cw, y0 = ch, x1 = -1, y1 = -1;
+    for (let y = 0; y < ch; y++) {
+      for (let x = 0; x < cw; x++) {
+        const i = (y * cw + x) * 4;
+        const r = data[i], g = data[i+1], b = data[i+2], a = data[i+3];
+        let isBg;
+        if (isTranspBg) isBg = a < 30;
+        else if (isBlackBg) isBg = (r < 30 && g < 30 && b < 30);
+        else isBg = (r > 225 && g > 225 && b > 225);
+        if (!isBg) {
+          if (x < x0) x0 = x; if (y < y0) y0 = y;
+          if (x > x1) x1 = x; if (y > y1) y1 = y;
+        }
+      }
+    }
+
+    if (x0 > x1 || y0 > y1) {
+      // Nothing found — fall back to full download
+      const a = document.createElement('a');
+      a.href = currentSvg;
+      a.download = (currentFile ? currentFile.name.replace(/\.[^.]+$/, '') : 'output') + '.svg';
+      a.click();
+      setStatus('ready (nothing to crop)', 'ok');
+      return;
+    }
+
+    // Map canvas coords back to SVG coordinate space (+1 px padding)
+    const pad = 1;
+    const sx0 = Math.max(0, Math.floor(x0 / scale) - pad);
+    const sy0 = Math.max(0, Math.floor(y0 / scale) - pad);
+    const sx1 = Math.min(W, Math.ceil (x1 / scale) + pad);
+    const sy1 = Math.min(H, Math.ceil (y1 / scale) + pad);
+    const sw  = sx1 - sx0, sh = sy1 - sy0;
+
+    // Apply cropped viewBox and updated dimensions
+    svgEl.setAttribute('viewBox', `${sx0} ${sy0} ${sw} ${sh}`);
+    svgEl.setAttribute('width',  sw);
+    svgEl.setAttribute('height', sh);
+
+    const newSvg = new XMLSerializer().serializeToString(svgEl);
+    const blob   = new Blob([newSvg], { type: 'image/svg+xml' });
+    const url    = URL.createObjectURL(blob);
+    const a      = document.createElement('a');
+    a.href       = url;
+    a.download   = (currentFile ? currentFile.name.replace(/\.[^.]+$/, '') : 'output') + '_cropped.svg';
+    a.click();
+    URL.revokeObjectURL(url);
+    const now = new Date();
+    setStatus(`cropped \u00B7 ${now.getHours().toString().padStart(2,'0')}:${now.getMinutes().toString().padStart(2,'0')}:${now.getSeconds().toString().padStart(2,'0')}`, 'ok');
+  } catch (ex) {
+    setStatus('crop error: ' + ex.message, 'error');
+  } finally {
+    btnDownloadCropped.disabled = false;
+  }
 });
 
 // ── zoom / pan ──────────────────────────────────────────────────────────────
@@ -1480,6 +1584,7 @@ document.getElementById('btool-retrace').addEventListener('click', () => {
       showImg(1, data.svg);
       currentSvg = data.svg;
       btnDownload.disabled = false;
+      btnDownloadCropped.disabled = false;
       setStatus('retraced \u2713', 'ok');
     } catch (ex) {
       setStatus('error: ' + ex.message, 'error');
