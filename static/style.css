@@ -9,12 +9,12 @@
   justify-content: center;
   text-align: center;
   padding: 24px;
-  font-family: 'ＭＳ Ｐゴシック', 'MS PGothic', sans-serif;
+  font-family: 'ＭＳ Ｐゴシック', 'MS PGothic', sans-serif, monospace;
   color: oklch(0.92 0.008 278);
 }
-.mobile-block-inner { max-width: 320px; }
+.mobile-block-inner { max-width: 90%; }
 .mobile-block-icon  { font-size: 3rem; margin-bottom: 16px; }
-.mobile-block h1    { font-size: 1.2rem; color: oklch(0.80 0.24 155); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 10px; }
+.mobile-block h1    { font-size: 1.5rem; color: oklch(0.80 0.24 155); letter-spacing: .1em; text-transform: uppercase; margin-bottom: 10px; }
 .mobile-block p     { color: oklch(0.65 0.010 278); font-size: .85rem; line-height: 1.6; }
 @media (max-width: 767px), (pointer: coarse) and (max-width: 1023px) {
   .mobile-block { display: flex; }
@@ -44,6 +44,7 @@ body {
   height: 100vh;
   display: flex;
   overflow: hidden;
+  user-select: none;
 }
 
 /* ── sidebar ─────────────────────────────────────────────────────────────── */
@@ -466,6 +467,7 @@ input[type=range]::-moz-range-thumb {
   position: absolute;
   pointer-events: none;
   display: none;
+  z-index: 10;
 }
 .xhair::before, .xhair::after {
   content: '';

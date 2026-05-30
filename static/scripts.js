@@ -25,7 +25,7 @@ const DEFAULTS = {
   threshold: 100, blur: 0.0,
   brightness: 1.0, gamma: 1.0, contrast: 1.0, sharpen: 0,
   dilate: 0, erode: 0,
-  alphamax: 1.3, opttolerance: 0.3, turdsize: 0, invert: true,
+  alphamax: 1.3, opttolerance: 0.3, turdsize: 0, invert: false,
   corner_break: false,
 };
 
@@ -112,7 +112,7 @@ function getParams() {
     alphamax:     ctrls.alphamax.value,
     opttolerance: ctrls.opttolerance.value,
     turdsize:     ctrls.turdsize.value,
-    invert_colors: ctrls.invert.checked ? 'true' : 'false',
+    invert_colors: (!ctrls.invert.checked) ? 'true' : 'false',
     corner_break:  ctrls.corner_break.checked ? 'true' : 'false',
   };
 }
@@ -121,7 +121,7 @@ function getParams() {
 // Update #vp1 background based on invert checkbox
 function updateVp1Background() {
   const vp1 = document.getElementById('vp1');
-  if (ctrls.invert.checked) {
+  if (!ctrls.invert.checked) {
     vp1.style.background = 'oklch(0.10 0.004 295)'; // dark background
   } else {
     vp1.style.background = '#fff'; // white background
